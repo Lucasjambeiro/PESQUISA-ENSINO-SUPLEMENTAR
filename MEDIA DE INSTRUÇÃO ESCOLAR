@@ -1,0 +1,125 @@
+##CLIMA ESCOLAR
+
+
+install.packages("writexl")
+library(writexl)
+
+#BAIXANDO A BASE DE DADOS ---------
+
+MORADOR <- 
+  read.fwf("MORADOR.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,1,2,2,4,3,1,1,
+                        1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,
+                        2,1,2,14,14,10,1,20,20,20,20)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG", 
+                           "COD_UPA", "NUM_DOM", "NUM_UC", "COD_INFORMANTE",
+                           "V0306", "V0401", "V04021", "V04022", "V04023",
+                           "V0403", "V0404", "V0405", "V0406", "V0407",
+                           "V0408", "V0409", "V0410", "V0411", "V0412",
+                           "V0413", "V0414", "V0415", "V0416", 
+                           "V041711", "V041712", "V041721", "V041722",
+                           "V041731", "V041732", "V041741", "V041742",
+                           "V0418", "V0419", "V0420", "V0421", "V0422",
+                           "V0423", "V0424", "V0425", "V0426", "V0427",
+                           "V0428", "V0429", "V0430", "ANOS_ESTUDO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL",
+                           "NIVEL_INSTRUCAO", "RENDA_DISP_PC","RENDA_MONET_PC",    
+                           "RENDA_NAO_MONET_PC","DEDUCAO_PC"   )
+           , dec="."
+  )   
+
+
+
+
+#FILTRO a BASE ----------
+BASE_TODA <- MORADOR %>%
+  filter(V0430==1 & V0425 %in% c(13,14,15))
+
+#ESSA SERVE PRA CONTAR APENAS OS QUE CONCLUÍRAM
+CONTAGEM_CONCLUSÃO <- count(BASE_TODA, V0425)
+
+rm(CONTAGEM_CONCLUSÃO)
+rm(BASE_TODA)
+
+#CRIEI A CATEGORIA GRADUADO ------- 
+MORADOR <- MORADOR %>%
+  mutate(NIVEL_INSTRUCAO = case_when(
+    V0430 == 1  & V0425 >= 13 ~ "8",
+    V0425 >= 14 & V0430 >= 1 ~ "8",
+    TRUE ~ as.character(NIVEL_INSTRUCAO)
+  ))
+
+
+#FILTRO PARA SABER SE FOI EFETUADO CORRETAMENTE O GRADURADO ------
+POS_GRADUADOS <- MORADOR %>% 
+  filter(NIVEL_INSTRUCAO == "8")
+
+rm(POS_GRADUADOS)
+
+#CRIANDO OS ID ------
+MORADOR <- MORADOR %>% 
+  unite("ID_MORADOR", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+
+#CRIANDO O ID FAMILIA
+MORADOR <- MORADOR %>% 
+  unite("ID_FAMILIA", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE)
+
+
+#USANDO IF_ELSE ----------
+#FORMANDO AS CATEGORIAS
+MORADOR2 <- MORADOR %>% 
+  mutate(SEM_INSTRU = if_else(NIVEL_INSTRUCAO == 1, 1, 0), FUND_INCOM = if_else(NIVEL_INSTRUCAO == 2, 1, 0), 
+         FUND_COM = if_else(NIVEL_INSTRUCAO == 3, 1, 0), MEDIA_INCOM = if_else(NIVEL_INSTRUCAO == 4, 1, 0),
+         MEDIA_COM = if_else(NIVEL_INSTRUCAO == 5, 1, 0), SUPERIOR_INCOM = if_else(NIVEL_INSTRUCAO == 6, 1, 0),
+         SUPERIOR_COM = if_else(NIVEL_INSTRUCAO == 7, 1, 0),POS_GRADUADOS = if_else(NIVEL_INSTRUCAO == 8, 1, 0))
+
+#SUMMARIZANDO AS CATEGORIAS -----
+MORADOR2 <- MORADOR2 %>% 
+  group_by(ID_FAMILIA) %>% 
+  summarise(SEM_INSTRU = sum(SEM_INSTRU), FUND_INCOM = sum(FUND_INCOM), FUND_COM = sum(FUND_COM), 
+            MEDIA_INCOM = sum(MEDIA_INCOM), MEDIA_COM = sum(MEDIA_COM), SUPERIOR_INCOM = sum(SUPERIOR_INCOM), SUPERIOR_COM = sum(SUPERIOR_COM), 
+            POS_GRADUADOS = sum(POS_GRADUADOS))
+
+#CRIANDO A PROPOCAO -------
+FAMILIA <- MORADOR2 %>% 
+  mutate(SOMA_TOTAL = SEM_INSTRU + FUND_INCOM + FUND_COM + MEDIA_INCOM + 
+           MEDIA_COM+SUPERIOR_INCOM+SUPERIOR_COM+POS_GRADUADOS) %>% 
+  mutate( PROP_SEM_INSTRU = SEM_INSTRU/SOMA_TOTAL*100,
+          PROP_FUND_INCOM = FUND_INCOM/SOMA_TOTAL*100,
+          PROP_FUND_COM = FUND_COM/SOMA_TOTAL*100,
+          PROP_MEDIA_INCOM = MEDIA_INCOM/SOMA_TOTAL*100,
+          PROP_MEDIA_COM = MEDIA_COM/SOMA_TOTAL*100,
+          PROP_SUPERIOR_INCOM = SUPERIOR_INCOM/SOMA_TOTAL*100,
+          PROP_SUPERIOR_COM = SUPERIOR_COM/SOMA_TOTAL*100,
+          PROP_POS_GRADUADOS = POS_GRADUADOS/SOMA_TOTAL*100)
+
+
+rm(MORADOR2)
+
+#SEGUNDA PARTE DA PESQUISA----------
+#FILTRANDO A BASE MORADOR COM 25 ANOS ---------
+MORADOR_25_ANOS <- MORADOR %>% 
+  filter(V0403 > 25)
+#CRIANDO A MEDIA DE ANOS DE ESTUDO DA FAMILIA ---------
+MEDIA_FAMILIA <- MORADOR_25_ANOS %>% 
+  group_by(ID_FAMILIA) %>% 
+  summarise(PESO_FINAL = mean(PESO_FINAL),
+            ANOS_ESTUDO = mean(ANOS_ESTUDO))
+
+
+#ADEQUANDO OS VALORES AS CATEGORIAS DE MUITO BAIXO A MUITO ALTO -----
+CLIMA_ESC_FAMILIA <- MEDIA_FAMILIA %>% 
+  mutate(CLIMA_ESCOLAR = if_else(ANOS_ESTUDO  < 5, "MUITO BAIXO", 
+                                 if_else(ANOS_ESTUDO >= 5 & ANOS_ESTUDO < 9, "BAIXO", 
+                                         if_else(ANOS_ESTUDO >= 9 & ANOS_ESTUDO < 12, "MEDIO",
+                                                 if_else(ANOS_ESTUDO >= 12 & ANOS_ESTUDO < 15, "ALTO","MUITO ALTO")))))           
+
+#A TABELA FINAL APLICANDO O PESO PARA TIRAR OS VALORES DE ACORDO COM A POPULACAO ----
+CLIMA_FREQ <- CLIMA_ESC_FAMILIA %>% 
+  group_by(CLIMA_ESCOLAR) %>% 
+  tally( wt=PESO_FINAL)
