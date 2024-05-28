@@ -1,0 +1,218 @@
+
+##ENSINO SUPLEMENTAR
+
+
+# CARREGAR PACOTES --------------------------------------------------------
+
+# Instala e carrega os principais pacotes utilizados
+
+install.packages("tidyverse")
+install.packages("readxl")
+install.packages("writexlsx")
+
+library(tidyverse)
+library(readxl)
+library(arrow)
+library(writexl)
+
+
+# DEFINIR DIRETORIO DE TRABALHO -------------------------------------------
+
+# Define a pasta local onde os dados utilizados serão consultados e salvos
+
+# Obs.: Substituir o endereço de acordo com a situação
+
+setwd("C:/Users/Oscar/Documents/POF 2018")
+
+
+
+# REGISTRO - MORADOR
+
+MORADOR <- 
+  read.fwf("MORADOR.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,1,2,2,4,3,1,1,
+                        1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,
+                        2,1,2,14,14,10,1,20,20,20,20)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG", 
+                           "COD_UPA", "NUM_DOM", "NUM_UC", "COD_INFORMANTE",
+                           "V0306", "V0401", "V04021", "V04022", "V04023",
+                           "V0403", "V0404", "V0405", "V0406", "V0407",
+                           "V0408", "V0409", "V0410", "V0411", "V0412",
+                           "V0413", "V0414", "V0415", "V0416", 
+                           "V041711", "V041712", "V041721", "V041722",
+                           "V041731", "V041732", "V041741", "V041742",
+                           "V0418", "V0419", "V0420", "V0421", "V0422",
+                           "V0423", "V0424", "V0425", "V0426", "V0427",
+                           "V0428", "V0429", "V0430", "ANOS_ESTUDO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL",
+                           "NIVEL_INSTRUCAO", "RENDA_DISP_PC","RENDA_MONET_PC",    
+                           "RENDA_NAO_MONET_PC","DEDUCAO_PC"   )
+           , dec="."
+  )
+
+
+DESPESA_INDIVIDUAL <- 
+  read.fwf("DESPESA_INDIVIDUAL.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,2,7,2,10,2
+                        ,2,1,1,1,12,10,1,2,14,14,10,5)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG",
+                           "COD_UPA", "NUM_DOM", "NUM_UC",
+                           "COD_INFORMANTE", "QUADRO", "SEQ", "V9001",
+                           "V9002", "V8000", "V9010", "V9011", "V9012",
+                           "V4104", "V4105", "DEFLATOR", "V8000_DEFLA",
+                           "COD_IMPUT_VALOR", "FATOR_ANUALIZACAO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL","V9004")
+           , dec="."
+  )   
+
+
+
+
+
+
+#ADICIONANDO OS GASTOS MENSALIZADO E A PROPORÇAO COM A RENDA ------------
+
+DESPESA_INDIVIDUAL <- DESPESA_INDIVIDUAL %>% 
+ mutate_at("V9011",~replace(., is.na(.), 1)) 
+
+DESPESA_INDIVIDUAL <- DESPESA_INDIVIDUAL %>% 
+  mutate(GASTO_MENSAL = V9011*V8000_DEFLA*FATOR_ANUALIZACAO/12)
+
+DESPESA_INDIVIDUAL <- DESPESA_INDIVIDUAL %>% 
+  mutate(PROPOCAO = GASTO_MENSAL/RENDA_TOTAL * 100)
+
+
+#CRIANDO O ID MORADOR E ID FAMILIA -----------
+DESPESA_INDIVIDUAL <- DESPESA_INDIVIDUAL %>% 
+  unite("ID_MORADOR", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+DESPESA_INDIVIDUAL <- DESPESA_INDIVIDUAL %>% 
+  unite("ID_FAMILIA", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE)
+
+MORADOR <- MORADOR %>% 
+  unite("ID_FAMILIA", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE)
+
+MORADOR <- MORADOR %>% 
+  unite("ID_MORADOR", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+
+#AGRUPANDO E SELECIONANDO AS VARIAVEIS DO DATA FRAME DE DESPESA ---------------
+DESPESA_FINAL <- select(DESPESA_INDIVIDUAL, ID_FAMILIA, 
+                      ,V9001,V8000,V8000_DEFLA,V9011,GASTO_MENSAL,PROPOCAO, RENDA_TOTAL)
+
+DESPESA_SUPLEMENTAR <- DESPESA_FINAL %>% 
+  filter(V9001 == "4901401" | V9001 == "4909401" | V9001 == "4902201" | V9001 == "4901501" | V9001 == "4900701")
+
+rm(DESPESA_FINAL)
+
+#AGRUPANDO E SELECIONANDO AS VARIAVEIS DO  DATA FRAME DE MORADOR ------------------
+#RENOMEANDO ALGUMAS VARIAVEIS
+
+MORADOR_SELECIONADO <- select(MORADOR, ID_FAMILIA, UF, V0403, V0306, V0404, V0405)
+
+MORADOR_SELECIONADO <- MORADOR_SELECIONADO %>% 
+  rename(IDADE = V0403, PARENTESCO = V0306, SEXO = V0404, COR_RACA = V0405)
+
+#AGRUPANDO A BASE QUALIDADE DE VIDA -----
+
+QUALIDADE <- select( MORADOR_QUALI_VIDA, ID_FAMILIA, C2,C3,C4, GRANDE_REGIAO)
+
+SOMA <- left_join(QUALIDADE, MORADOR_SELECIONADO, by= "ID_FAMILIA")
+
+SOMA2 <- left_join(arranjo, SOMA)
+#SELECIONANDO E AGRUPANDO A BASE DE RACA ------
+
+RACA_COR <- select(FAMILIA_RACA_FINAL, ID_FAMILIA, COR_FAMILIA)
+
+SOMA_FINAL <- left_join(SOMA2,RACA_COR, by = "ID_FAMILIA")
+rm(SOMA)
+rm(SOMA2)
+#SELECIONANDO AS VARIAVEIS DA BASE NCAT FAMILIA
+
+NCATs_FAMILIA_SELC <- NCATs_FAMILIA %>% 
+  select(ID_FAMILIA, CLASSE_FAMILIA)
+
+
+#JUNTANDO AS TABELAS PELO ID FAMILIA --------------------
+PLANILHA <- left_join(NCATs_FAMILIA_SELC, SOMA_FINAL, by= "ID_FAMILIA")
+PLANILHA2 <- left_join(PLANILHA, DESPESA_SUPLEMENTAR, by= "ID_FAMILIA")
+
+
+# COM O VALOR SENDO DUPLICADO AJEITEI A TABELA
+resultado <- inner_join(PLANILHA2, CLIMA_ESC_FAMILIA, by = "ID_FAMILIA") %>%
+  distinct(ID_FAMILIA, .keep_all = TRUE)
+
+rm(DESPESA_FINAL
+
+#FILTRANDO OS CURSOS
+PLANILHA_TOTAL <- resultado %>% 
+  filter(V9001 == "4901401" | V9001 == "4909401" | V9001 == "4902201" | V9001 == "4901501" | V9001 == "4900701")
+
+PLANILHA_TOTAL <- PLANILHA_TOTAL %>% 
+  rename(INSTRUCAO_REFERENCIA = C4)
+
+rm(resultado)
+rm(PLANILHA2)
+rm(PLANILHA)
+rm(SOMA_FINAL)
+#TIRANDO RESULTADOS PARA INFORMATICA -------------
+INFORMATICA <- PLANILHA_TOTAL %>% 
+  filter(V9001 == 4901401)
+
+#ARRANJO FAMILIAR
+
+ARRANJO_INFORMATICA <- INFORMATICA %>% 
+  group_by( arranjo_afp) %>%
+  tally(wt = PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100) %>% 
+  arrange(desc(n))
+
+
+#COR DA FAMILIA
+
+COR_INFORMATICA <- INFORMATICA %>% 
+  group_by( COR_FAMILIA) %>%
+  tally(wt = PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100) %>% 
+  arrange(desc(n))
+
+#CLIMA ESCOLAR
+CLIMA_INFORMATICA <- INFORMATICA %>% 
+  group_by(CLIMA_ESCOLAR) %>%
+  tally(wt = PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100) %>% 
+  arrange(desc(n))
+
+#CLASSE
+
+CLASSE_INFORMATICA <- INFORMATICA%>% 
+  group_by(CLASSE_FAMILIA) %>%
+  tally(wt = PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100) %>% 
+  arrange(desc(n))
+
+#MEDIA DO VALOR
+MEDIA_INFORMATICA <- INFORMATICA %>% 
+summarise(MEDIA=mean(GASTO_MENSAL),
+          MAX=max(GASTO_MENSAL),
+          MIN=min(GASTO_MENSAL))
+
+#MEDIANA DA RENDA
+RENDA_INFORMATICA <- INFORMATICA %>% 
+  summarise(MEDIA=median(RENDA_TOTAL),
+            MAX=max(RENDA_TOTAL),
+            MIN=min(RENDA_TOTAL))
+
+
+#PROPOCAO
+PROPOCAO_INFORMATICA <- INFORMATICA %>% 
+  summarise(MEDIA=mean(PROPOCAO),
+            MAX=max(PROPOCAO),
+            MIN=min(PROPOCAO))
