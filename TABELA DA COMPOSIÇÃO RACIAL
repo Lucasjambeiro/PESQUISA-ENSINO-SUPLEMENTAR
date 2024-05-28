@@ -1,0 +1,266 @@
+
+library(devtools)
+library(PNADcIBGE)
+library(readr)
+library(survey)
+library(magrittr)
+library(PNADcIBGE)
+library(tidyverse)
+library(readxl)
+library(dplyr)
+
+
+MORADOR <- 
+  read.fwf("MORADOR.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,1,2,2,4,3,1,1,
+                        1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,
+                        2,1,2,14,14,10,1,20,20,20,20)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG", 
+                           "COD_UPA", "NUM_DOM", "NUM_UC", "COD_INFORMANTE",
+                           "V0306", "V0401", "V04021", "V04022", "V04023",
+                           "V0403", "V0404", "V0405", "V0406", "V0407",
+                           "V0408", "V0409", "V0410", "V0411", "V0412",
+                           "V0413", "V0414", "V0415", "V0416", 
+                           "V041711", "V041712", "V041721", "V041722",
+                           "V041731", "V041732", "V041741", "V041742",
+                           "V0418", "V0419", "V0420", "V0421", "V0422",
+                           "V0423", "V0424", "V0425", "V0426", "V0427",
+                           "V0428", "V0429", "V0430", "ANOS_ESTUDO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL",
+                           "NIVEL_INSTRUCAO", "RENDA_DISP_PC","RENDA_MONET_PC",    
+                           "RENDA_NAO_MONET_PC","DEDUCAO_PC"   )
+           , dec="."
+  )   
+
+
+
+
+
+
+
+MORADOR <- MORADOR %>% 
+  unite("id_familia", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE)
+
+
+
+# Criando Variáves Fator Raça
+
+BRANCOS <- MORADOR %>% 
+  filter(V0405 == 1)%>% 
+  mutate(COR_PRETA=0, COR_BRANCA=1, COR_AMARELA=0, COR_PARDA=0, COR_INDIGENA=0, COR_SEM_DECLARACAO=0 )
+
+PRETOS <- MORADOR %>% 
+  filter(V0405 == 2) %>% 
+  mutate(COR_BRANCA=0, COR_PRETA=1, COR_AMARELA=0, COR_PARDA=0, COR_INDIGENA=0, COR_SEM_DECLARACAO=0)
+
+AMARELA <- MORADOR %>% 
+  filter(V0405 == 3) %>% 
+  mutate(COR_BRANCA=0, COR_PRETA=0, COR_AMARELA=1, COR_PARDA=0, COR_INDIGENA=0, COR_SEM_DECLARACAO=0)
+
+PARDA <- MORADOR %>% 
+  filter(V0405 == 4) %>% 
+  mutate(COR_BRANCA=0, COR_PRETA=0, COR_AMARELA=0, COR_PARDA=1, COR_INDIGENA=0, COR_SEM_DECLARACAO=0)
+
+INDIGENA <- MORADOR %>% 
+  filter(V0405 == 5) %>% 
+  mutate(COR_BRANCA=0, COR_PRETA=0, COR_AMARELA=0, COR_PARDA=0, COR_INDIGENA=1, COR_SEM_DECLARACAO=0)
+
+COR_SEM_DECLARACAO <- MORADOR %>% 
+  filter(V0405 == 9) %>% 
+  mutate(COR_BRANCA=0, COR_PRETA=0, COR_AMARELA=0, COR_PARDA=0, COR_INDIGENA=0, COR_SEM_DECLARACAO=1)
+
+
+MORADOR_RAÇA <- bind_rows(BRANCOS, PRETOS, AMARELA, PARDA, INDIGENA, COR_SEM_DECLARACAO)
+
+rm(BRANCOS, PRETOS, AMARELA, PARDA, INDIGENA, COR_SEM_DECLARACAO)
+
+# 
+
+FAMILIA_RAÇA <- MORADOR_RAÇA %>% 
+  group_by(id_familia) %>% 
+  summarise(COR_BRANCA=sum(COR_BRANCA), COR_PRETA=sum(COR_PRETA), COR_AMARELA=sum(COR_AMARELA), 
+            COR_PARDA=sum(COR_PARDA), COR_INDIGENA=sum(COR_INDIGENA), COR_SEM_DECLARACAO=sum(COR_SEM_DECLARACAO))
+
+
+
+################################################ Famílias Monorraciais 
+
+FAMILIA_COR_BRANCA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA > 0 & COR_PRETA==0 &  COR_AMARELA==0 & COR_PARDA==0 & COR_INDIGENA==0 &  
+                              COR_SEM_DECLARACAO==0) %>% 
+  mutate(COR_FAMILIA = "1")
+
+FAMILIA_COR_PRETA <- FAMILIA_RAÇA %>% 
+     filter(COR_PRETA > 0 & COR_BRANCA == 0 & COR_AMARELA ==0 & COR_PARDA ==0 & COR_INDIGENA == 0 & COR_SEM_DECLARACAO ==0)%>% 
+  mutate(COR_FAMILIA = "2")
+
+FAMILIA_COR_AMARELA <- FAMILIA_RAÇA %>% 
+     filter(COR_AMARELA > 0 & COR_BRANCA == 0 & COR_PRETA == 0 & COR_PARDA == 0 & COR_INDIGENA ==0 & COR_SEM_DECLARACAO ==0) %>% 
+mutate(COR_FAMILIA = "3")
+
+FAMILIA_COR_PARDA <- FAMILIA_RAÇA %>% 
+  filter(COR_PARDA > 0 & COR_BRANCA ==0 & COR_AMARELA ==0 & COR_PRETA ==0 & COR_INDIGENA ==0 & COR_SEM_DECLARACAO ==0) %>% 
+mutate(COR_FAMILIA = "4")
+
+FAMILIA_COR_INDIGENA <- FAMILIA_RAÇA %>% 
+  filter(COR_INDIGENA > 0 & COR_BRANCA == 0 & COR_PRETA ==0 & COR_AMARELA ==0 & COR_PARDA ==0 & COR_SEM_DECLARACAO==0) %>% 
+  mutate(COR_FAMILIA = "5")
+
+FAMILIA_COR_SEM_DECLARACAO <- FAMILIA_RAÇA %>% 
+  filter(COR_SEM_DECLARACAO > 0 & COR_BRANCA ==0 & COR_PRETA ==0 & COR_AMARELA ==0 & 
+           COR_PARDA ==0 & COR_INDIGENA ==0) %>% 
+  mutate(COR_FAMILIA = "6")
+
+
+
+
+######################################## Famílias interraciais 
+
+#Família Interracial Branca
+
+INTERRACIAL_BRANCA_e_PARDA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA > 0 & COR_PRETA==0 & COR_AMARELA== 0 & COR_PARDA > 0 & COR_INDIGENA==0 &  
+           COR_SEM_DECLARACAO==0)%>% 
+  mutate(COR_FAMILIA = "7")
+
+INTERRACIAL_BRANCA_E_PRETA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA > 0 & COR_PRETA > 0 & COR_AMARELA== 0 & COR_PARDA == 0 & COR_INDIGENA==0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "8")
+  
+
+INTERRACIAL_BRANCA_E_AMARELA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA > 0 & COR_PRETA == 0 & COR_AMARELA > 0 & COR_PARDA == 0 & COR_INDIGENA==0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "9")
+
+INTERRACIAL_BRANCA_E_INDÍGENA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA > 0 & COR_PRETA == 0 & COR_AMARELA== 0 & COR_PARDA == 0 & COR_INDIGENA > 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "10")
+
+
+
+#Família Interracial Parda
+
+INTERRACIAL_PARDA_E_PRETA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA== 0 & COR_PARDA > 0  & COR_INDIGENA == 0 &  
+            COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "11")
+
+INTERRACIAL_PARDA_E_BRANCA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA> 0 & COR_PRETA == 0  & COR_AMARELA== 0 & COR_PARDA > 0  & COR_INDIGENA == 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "12")
+
+INTERRACIAL_PARDA_E_AMARELA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA > 0 & COR_PARDA > 0  & COR_INDIGENA == 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "13")
+
+
+INTERRACIAL_PARDA_E_INDÍGENA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA== 0 & COR_PARDA > 0  & COR_INDIGENA > 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "14")
+
+
+
+#Família Interracial Preta
+
+INTERRACIAL_PRETA_E_AMARELA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA >0 & COR_PARDA == 0  & COR_INDIGENA == 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "15")
+
+INTERRACIAL_PRETA_E_INDÍGENA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA == 0 & COR_PARDA == 0  & COR_INDIGENA > 0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "16")
+
+
+#Família Interracial Amarela 
+
+INTERRACIAL_AMARELA_E_INDÍGENA <- FAMILIA_RAÇA %>% 
+  filter(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA >0 & COR_PARDA == 0  & COR_INDIGENA >0 &  
+           COR_SEM_DECLARACAO==0) %>%
+  mutate(COR_FAMILIA = "17")
+
+
+#Família Interracial Indígena já consta no Script
+
+
+
+FAMILIA_RAÇA_FINAL <- bind_rows(FAMILIA_COR_BRANCA, FAMILIA_COR_PRETA, FAMILIA_COR_AMARELA, FAMILIA_COR_PARDA, 
+                          FAMILIA_COR_INDIGENA,FAMILIA_COR_SEM_DECLARACAO,INTERRACIAL_BRANCA_e_PARDA,
+                          INTERRACIAL_BRANCA_E_PRETA, INTERRACIAL_BRANCA_E_AMARELA, INTERRACIAL_BRANCA_E_INDÍGENA,
+                          INTERRACIAL_PARDA_E_PRETA, INTERRACIAL_PARDA_E_AMARELA, INTERRACIAL_PARDA_E_INDÍGENA,
+                          INTERRACIAL_PRETA_E_AMARELA, INTERRACIAL_PRETA_E_INDÍGENA, INTERRACIAL_AMARELA_E_INDÍGENA)
+                          
+                          
+rm(INTERRACIAL_)                          
+                  
+# Famílias monoraciais 
+
+FAMILIA_RAÇA_FINAL <- FAMILIA_RAÇA %>% 
+  mutate(COR_FAMILIA = if_else(COR_BRANCA > 0 & COR_PRETA==0 &  COR_AMARELA==0 & COR_PARDA==0 & COR_INDIGENA==0 &  
+           COR_SEM_DECLARACAO==0, 1, 
+           if_else(COR_PRETA > 0 & COR_BRANCA == 0 & COR_AMARELA ==0 & COR_PARDA ==0 & COR_INDIGENA == 0 & 
+                     COR_SEM_DECLARACAO ==0, 2,
+           if_else(COR_AMARELA > 0 & COR_BRANCA == 0 & COR_PRETA == 0 & COR_PARDA == 0 & COR_INDIGENA ==0 & 
+                     COR_SEM_DECLARACAO ==0, 3,
+           if_else(COR_PARDA > 0 & COR_BRANCA ==0 & COR_AMARELA ==0 & COR_PRETA ==0 &COR_INDIGENA ==0 & 
+                     COR_SEM_DECLARACAO ==0, 4,
+           if_else(COR_INDIGENA > 0 & COR_BRANCA == 0 & COR_PRETA ==0 & COR_AMARELA ==0 & COR_PARDA ==0 & 
+                     COR_SEM_DECLARACAO==0, 5,
+           if_else(COR_SEM_DECLARACAO > 0 & COR_BRANCA ==0 & COR_PRETA ==0 & COR_AMARELA ==0 & 
+                     COR_PARDA ==0 & COR_INDIGENA ==0, 6,
+           if_else(COR_BRANCA > 0 & COR_PRETA==0 & COR_AMARELA== 0 & COR_PARDA > 0 & COR_INDIGENA==0 &  
+                     COR_SEM_DECLARACAO==0, 7,
+           if_else(COR_BRANCA > 0 & COR_PRETA > 0 & COR_AMARELA== 0 & COR_PARDA == 0 & COR_INDIGENA==0 &  
+                     COR_SEM_DECLARACAO==0, 8,
+           if_else(COR_BRANCA > 0 & COR_PRETA == 0 & COR_AMARELA > 0 & COR_PARDA == 0 & COR_INDIGENA==0 &  
+                     COR_SEM_DECLARACAO==0, 9,
+           if_else(COR_BRANCA > 0 & COR_PRETA == 0 & COR_AMARELA== 0 & COR_PARDA == 0 & COR_INDIGENA > 0 &  
+                     COR_SEM_DECLARACAO==0, 10,
+           if_else(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA== 0 & COR_PARDA > 0  & COR_INDIGENA == 0 &  
+                     COR_SEM_DECLARACAO==0, 11,
+           if_else(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA > 0 & COR_PARDA > 0  & COR_INDIGENA == 0 &  
+                     COR_SEM_DECLARACAO==0, 12,
+           if_else(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA== 0 & COR_PARDA > 0  & COR_INDIGENA > 0 &  
+                     COR_SEM_DECLARACAO==0, 13,
+           if_else(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA > 0 & COR_PARDA == 0  & COR_INDIGENA == 0 &  
+                    COR_SEM_DECLARACAO==0, 14,
+           if_else(COR_BRANCA == 0 & COR_PRETA > 0  & COR_AMARELA == 0 & COR_PARDA == 0  & COR_INDIGENA > 0 &  
+                     COR_SEM_DECLARACAO==0, 15,
+           if_else(COR_BRANCA == 0 & COR_PRETA == 0  & COR_AMARELA >0 & COR_PARDA == 0  & COR_INDIGENA >0 &  
+                     COR_SEM_DECLARACAO==0, 16, 17)))))))))))))))))
+           
+
+count(FAMILIA_RAÇA_FINAL, COR_FAMILIA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
