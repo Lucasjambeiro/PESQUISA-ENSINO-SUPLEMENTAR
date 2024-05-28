@@ -1,0 +1,299 @@
+
+# Carregando Pacotes 
+
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("readxl")
+library(readxl)
+
+# Importando dados da POF RENDIMENTO DO TRABALHO
+
+# Criando id_Familia para as NCATs
+
+NCATs_FINAL <- NCATs_FINAL %>% 
+  unite("id_familia", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE)
+
+# Criando variáveis 
+
+NCATs_FINAL <- NCATs_FINAL %>% 
+  mutate(NCAT_11 = if_else(NCAT == 11, 1, 0)) %>% 
+  mutate(NCAT_12 = if_else(NCAT == 12, 1, 0)) %>% 
+  mutate(NCAT_13 = if_else(NCAT == 13, 1, 0)) %>% 
+  mutate(NCAT_21 = if_else(NCAT == 21, 1, 0)) %>% 
+  mutate(NCAT_22 = if_else(NCAT == 22, 1, 0)) %>%
+  mutate(NCAT_23 = if_else(NCAT == 23, 1, 0)) %>%
+  mutate(NCAT_24 = if_else(NCAT == 24, 1, 0)) %>%
+  mutate(NCAT_25 = if_else(NCAT == 25, 1, 0)) %>%
+  mutate(NCAT_26 = if_else(NCAT == 26, 1, 0)) %>%
+  mutate(NCAT_31 = if_else(NCAT == 31, 1, 0)) %>%
+  mutate(NCAT_32 = if_else(NCAT == 32, 1, 0)) %>%
+  mutate(NCAT_33 = if_else(NCAT == 33, 1, 0)) %>%
+  mutate(NCAT_34 = if_else(NCAT == 34, 1, 0)) %>%
+  mutate(NCAT_35 = if_else(NCAT == 35, 1, 0)) %>%
+  mutate(NCAT_41 = if_else(NCAT == 41, 1, 0)) %>%
+  mutate(NCAT_42 = if_else(NCAT == 42, 1, 0)) %>%
+  mutate(NCAT_43 = if_else(NCAT == 43, 1, 0)) %>%
+  mutate(NCAT_44 = if_else(NCAT == 44, 1, 0)) %>%
+  mutate(NCAT_45 = if_else(NCAT == 45, 1, 0)) %>%
+  mutate(NCAT_46 = if_else(NCAT == 46, 1, 0)) %>%
+  mutate(NCAT_51 = if_else(NCAT == 51, 1, 0)) %>%
+  mutate(NCAT_52 = if_else(NCAT == 52, 1, 0)) %>%
+  mutate(NCAT_61 = if_else(NCAT == 61, 1, 0)) %>%
+  mutate(NCAT_62 = if_else(NCAT == 62, 1, 0)) %>%
+  mutate(NCAT_63 = if_else(NCAT == 63, 1, 0)) %>%
+  mutate(NCAT_64 = if_else(NCAT == 64, 1, 0)) %>%
+  mutate(NCAT_65 = if_else(NCAT == 65, 1, 0)) %>%
+  mutate(NCAT_66 = if_else(NCAT == 66, 1, 0)) %>%
+  mutate(NCAT_67 = if_else(NCAT == 67, 1, 0)) %>%
+  mutate(NCAT_71 = if_else(NCAT == 71, 1, 0)) %>%
+  mutate(NCAT_81 = if_else(NCAT == 81, 1, 0)) %>%
+  mutate(NCAT_82 = if_else(NCAT == 82, 1, 0)) %>%
+  mutate(NCAT_83 = if_else(NCAT == 83, 1, 0)) %>%
+  mutate(NCAT_84 = if_else(NCAT == 84, 1, 0)) %>%
+  mutate(NCAT_91 = if_else(NCAT == 91, 1, 0))
+
+# Criando NCAt_Família
+
+NCATs_FAMILIA <- NCATs_FINAL %>% 
+  group_by(id_familia) %>% 
+  summarise(NCAT_11 = sum(NCAT_11), NCAT_12 = sum(NCAT_12), NCAT_13 = sum(NCAT_13),
+            NCAT_21 = sum(NCAT_21), NCAT_22 = sum(NCAT_22), NCAT_23 = sum(NCAT_23),
+            NCAT_24 = sum(NCAT_24), NCAT_25 = sum(NCAT_25), NCAT_26 = sum(NCAT_26),
+            NCAT_31 = sum(NCAT_31), NCAT_32 = sum(NCAT_32), NCAT_33 = sum(NCAT_33),
+            NCAT_34 = sum(NCAT_34), NCAT_35 = sum(NCAT_35), NCAT_41 = sum(NCAT_41),
+            NCAT_42 = sum(NCAT_42), NCAT_43 = sum(NCAT_43), NCAT_44 = sum(NCAT_44),
+            NCAT_45 = sum(NCAT_45), NCAT_46 = sum(NCAT_46), NCAT_51 = sum(NCAT_51),
+            NCAT_52 = sum(NCAT_52), NCAT_61 = sum(NCAT_61), NCAT_62 = sum(NCAT_62),
+            NCAT_63 = sum(NCAT_63), NCAT_64 = sum(NCAT_64), NCAT_65 = sum(NCAT_65),
+            NCAT_66 = sum(NCAT_66), NCAT_67 = sum(NCAT_67), NCAT_71 = sum(NCAT_71),
+            NCAT_81 = sum(NCAT_81), NCAT_82 = sum(NCAT_82), NCAT_83 = sum(NCAT_83),
+            NCAT_84 = sum(NCAT_84), NCAT_91 = sum(NCAT_91))
+
+# Classe Família
+
+NCATs_FAMILIA <- NCATs_FAMILIA %>% 
+  mutate(CLASSE_1 = (NCAT_11 + NCAT_12 + NCAT_13 + NCAT_21 + NCAT_22 + NCAT_23 + NCAT_24 + NCAT_25 + NCAT_26),
+         CLASSE_2 = (NCAT_31 + NCAT_32 + NCAT_33 + NCAT_34 + NCAT_35 + NCAT_41 + NCAT_42 + NCAT_43 + NCAT_44 + NCAT_45 + NCAT_46),
+         CLASSE_3 = (NCAT_51 + NCAT_52 + NCAT_61 + NCAT_62 + NCAT_63 + NCAT_64 + NCAT_65 + NCAT_66 + NCAT_67 + NCAT_71 + NCAT_81 +
+                       NCAT_82 + NCAT_83 + NCAT_84 + NCAT_91))
+
+# Combinações de Família
+
+
+NCATs_FAMILIA <- NCATs_FAMILIA %>% 
+  mutate(CLASSE_FAMILIA = if_else(CLASSE_1 > 0 & CLASSE_2 == 0 & CLASSE_3 == 0, 1,
+                                  if_else(CLASSE_1 == 0 & CLASSE_2 > 0 & CLASSE_3 == 0, 2,
+                                          if_else(CLASSE_1 == 0 & CLASSE_2 == 0 & CLASSE_3 > 0, 3,
+                                                  if_else(CLASSE_1 > 0 & CLASSE_2 > 0 & CLASSE_3 == 0, 4,
+                                                          if_else(CLASSE_1 > 0 & CLASSE_2 == 0 & CLASSE_3 > 0, 5,
+                                                                  if_else(CLASSE_1 == 0 & CLASSE_2 > 0 & CLASSE_3 > 0, 6,
+                                                                          if_else(CLASSE_1 > 0 & CLASSE_2 > 0 & CLASSE_3 > 0, 7, NA))))))))
+
+
+count(NCATs_FAMILIA, CLASSE_FAMILIA)
+
+
+# Carregando dados MORADOR-------------------------------------
+
+MORADOR <- 
+  read.fwf("C:/Users/gp-me/OneDrive/GP.MES/dados-fonte/POF/Dados_20230713/MORADOR.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,1,2,2,4,3,1,1,
+                        1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,
+                        2,1,2,14,14,10,1,20,20,20,20)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG", 
+                           "COD_UPA", "NUM_DOM", "NUM_UC", "COD_INFORMANTE",
+                           "V0306", "V0401", "V04021", "V04022", "V04023",
+                           "V0403", "V0404", "V0405", "V0406", "V0407",
+                           "V0408", "V0409", "V0410", "V0411", "V0412",
+                           "V0413", "V0414", "V0415", "V0416", 
+                           "V041711", "V041712", "V041721", "V041722",
+                           "V041731", "V041732", "V041741", "V041742",
+                           "V0418", "V0419", "V0420", "V0421", "V0422",
+                           "V0423", "V0424", "V0425", "V0426", "V0427",
+                           "V0428", "V0429", "V0430", "ANOS_ESTUDO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL",
+                           "NIVEL_INSTRUCAO", "RENDA_DISP_PC","RENDA_MONET_PC",    
+                           "RENDA_NAO_MONET_PC","DEDUCAO_PC"   )
+           , dec="."
+  )   
+
+
+MORADOR <- MORADOR %>%
+  unite("ID_DOMICILIO", COD_UPA:NUM_DOM, sep= "-",
+        remove = FALSE) %>% 
+  unite("id_familia", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE) %>%
+  unite("ID_MORADOR", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+# Jutando dados do NCAT Família e dados MORADOR
+
+MORADOR <- MORADOR %>% 
+  select(id_familia, PESO_FINAL)
+
+NCATs_FAMILIA <- NCATs_FAMILIA %>% 
+  left_join(MORADOR)
+
+
+# Frações de Classe
+
+
+NCATs_FAMILIA <- NCATs_FAMILIA %>% 
+  mutate(FRACAO_CLASSE_1 = (NCAT_11 + NCAT_12 + NCAT_13),
+         FRACAO_CLASSE_2 = (NCAT_21 + NCAT_22 + NCAT_23 + NCAT_24 + NCAT_25 + NCAT_26),
+         FRACAO_CLASSE_3 = (NCAT_31 + NCAT_32 + NCAT_33 + NCAT_34 + NCAT_35),
+         FRACAO_CLASSE_4 = (NCAT_41 + NCAT_42 + NCAT_43 + NCAT_44 + NCAT_45 + NCAT_46),
+         FRACAO_CLASSE_5 = (NCAT_51 + NCAT_52),
+         FRACAO_CLASSE_6 = (NCAT_61 + NCAT_62 + NCAT_63 + NCAT_64 + NCAT_65 + NCAT_66 + NCAT_67),
+         FRACAO_CLASSE_7 = (NCAT_71),
+         FRACAO_CLASSE_8 = (NCAT_81 + NCAT_82 + NCAT_83 + NCAT_84),
+         FRACAO_CLASSE_9 = (NCAT_91))
+
+# Combinações de Frações de Classe
+
+NCATs_FAMILIA <- NCATs_FAMILIA %>% 
+  mutate(FRACAO_CLASSE_FAMILIA = if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 101,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 102,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 103,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 201,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 202,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 203,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 301,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 302,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 303,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 304,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 305,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 306,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 307,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 308,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 309,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 310,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 311,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 312,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 313,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 314,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 > 0, 315,
+                                 if_else(FRACAO_CLASSE_1  > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 401,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 402,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 403,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 404,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 501,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 502,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 503,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 504,
+                                 if_else(FRACAO_CLASSE_1 > 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 505,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 506,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 507,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 508,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 509,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 > 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 510,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 601,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 602,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 603,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 604,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 > 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 605,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 > 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 606,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 > 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 607,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 == 0, 608,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 > 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 > 0 & FRACAO_CLASSE_9 == 0, 609,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 > 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 610,
+                                 if_else(FRACAO_CLASSE_1 == 0 & FRACAO_CLASSE_2 == 0 & FRACAO_CLASSE_3 == 0 &
+                                  FRACAO_CLASSE_4 == 0 & FRACAO_CLASSE_5 == 0 & FRACAO_CLASSE_6 == 0 &
+                                  FRACAO_CLASSE_7 == 0 & FRACAO_CLASSE_8 == 0 & FRACAO_CLASSE_9 > 0, 611, NA
+                                  )))))))))))))))))))))))))))))))))))))))))))))))
+                                                                                         
+                                         
+count(NCATs_FAMILIA, FRACAO_CLASSE_FAMILIA)
