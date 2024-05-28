@@ -1,0 +1,272 @@
+# CARREGAR PACOTES ----------------------------------------
+
+# CARREGAR DADOS ----------------------------------------
+
+POF_MORADOR <- 
+  read.fwf("C:/MORADOR.txt" 
+           , widths = c(2,4,1,9,2,1,2,2,1,2,2,4,3,1,1,
+                        1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,2,1,1,2,1,1,2,1,1,1,
+                        2,1,2,14,14,10,1,20,20,20,20)
+           , na.strings=c(" ")
+           , col.names = c("UF", "ESTRATO_POF", "TIPO_SITUACAO_REG", 
+                           "COD_UPA", "NUM_DOM", "NUM_UC", "COD_INFORMANTE",
+                           "V0306", "V0401", "V04021", "V04022", "V04023",
+                           "V0403", "V0404", "V0405", "V0406", "V0407",
+                           "V0408", "V0409", "V0410", "V0411", "V0412",
+                           "V0413", "V0414", "V0415", "V0416", 
+                           "V041711", "V041712", "V041721", "V041722",
+                           "V041731", "V041732", "V041741", "V041742",
+                           "V0418", "V0419", "V0420", "V0421", "V0422",
+                           "V0423", "V0424", "V0425", "V0426", "V0427",
+                           "V0428", "V0429", "V0430", "ANOS_ESTUDO",
+                           "PESO", "PESO_FINAL", "RENDA_TOTAL",
+                           "NIVEL_INSTRUCAO", "RENDA_DISP_PC","RENDA_MONET_PC",    
+                           "RENDA_NAO_MONET_PC","DEDUCAO_PC"   )
+           , dec="."
+  )
+
+POF_MORADOR_QUALI_VIDA <- 
+  read.fwf("C:MORADOR_QUALI_VIDA.txt"
+           , widths = c(2,4,1,9,2,1,2,20,20,1,1,1,1,1,
+                        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                        1,1,1,1,1,1,1,1,2,20,20,14,14)
+           , na.strings=c(" ")
+           , col.names = c("UF","ESTRATO_POF","TIPO_SITUACAO_REG","COD_UPA",           
+                           "NUM_DOM","NUM_UC","COD_INFORMANTE","CONTAGEM_PONDERADA",
+                           "FUNCAO_PERDA","V201","V202","V204","V205","V206",              
+                           "V207","V208","V209","V210","V211","V212","V214","V215",              
+                           "V216","V217","V301","V302","V303","V304","V305","V306",              
+                           "V307","V308","V401","V402","V403","V501","V502","V503",              
+                           "V504","V505","V506","V601","V602","V603","V604","V605",              
+                           "V606","V607","V608","V609","V610","V611","V701","V702",              
+                           "V703","V704","V801","V802","V901","V902","GRANDE_REGIAO",     
+                           "C1","C2","C3","C4","C5","C6","C7","RENDA_DISP_PC",     
+                           "RENDA_DISP_PC_SS","PESO","PESO_FINAL" )
+           , dec="."
+  )
+
+# ORGANIZAR BASE DE DADOS ----------------------------------------
+
+# concatenando variáveis 
+
+MORADOR <- POF_MORADOR %>% 
+  unite("id_domicilio", COD_UPA:NUM_DOM, sep= "-",
+        remove = FALSE) %>% 
+  unite("id_familia", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE) %>%
+  unite("id_morador", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+MORADOR_QUALI_VIDA <- POF_MORADOR_QUALI_VIDA %>% 
+  unite("id_domicilio", COD_UPA:NUM_DOM, sep= "-",
+        remove = FALSE) %>% 
+  unite("id_familia", COD_UPA:NUM_UC, sep= "-",
+        remove = FALSE) %>%
+  unite("id_morador", COD_UPA:COD_INFORMANTE, sep= "-",
+        remove = FALSE)
+
+# juntando as bases morador e morador_quali_vida
+
+base_morador <- MORADOR_QUALI_VIDA %>% 
+  select(-PESO, -PESO_FINAL, -RENDA_DISP_PC, -UF, -ESTRATO_POF, -TIPO_SITUACAO_REG,
+         -COD_UPA, -NUM_DOM, -NUM_UC, -COD_INFORMANTE, -id_familia, -id_domicilio) %>%  
+  left_join(MORADOR, by = c('id_morador'='id_morador'))
+
+# ARRANJO_AFG ----------------------------------------
+
+# criando variavel casal, que detecta a presença de conjuge em relação a pessoa de referencia em uma familia
+
+base_morador <- base_morador %>% 
+  group_by(id_familia) %>%  
+  mutate(casal = any(V0306 == 2 | V0306 == 3))
+
+# criando variavel qtd_membros, que conta a quantidade de membros em uma familia
+
+base_morador <- base_morador %>% 
+  filter(V0306 != 18 & V0306 != 19) %>% 
+  add_count(id_familia, name = 'qtd_membros')
+
+# criando a variavel 'geracao', que categoriza os individuos pela faixa etaria
+
+base_morador <- base_morador %>% 
+  mutate(geracao = factor(case_when(V0403 <= 14 ~ "Criança",
+                                    V0403 > 14 & V0403 <= 64 ~ "Adulta",
+                                    V0403 > 64 ~ "Idosa")))
+
+# criando variavel que conta a quantidade de adultos, crianças e idosos em uma familia
+
+base_morador <- base_morador %>% 
+  mutate(qtd_adulta = sum(geracao == 'Adulta'),
+         qtd_crianca = sum(geracao == 'Criança'),
+         qtd_idosa = sum(geracao == 'Idosa'))
+
+# criando variável arranjo_afg, que determina arranjos familiares baseados em faixa etária
+
+base_morador <- base_morador %>% 
+  mutate(
+    arranjo_afg = case_when(
+      qtd_adulta == 1 & qtd_crianca == 0 & qtd_idosa == 0 ~ 1,
+      qtd_adulta == 1 & qtd_crianca == 0 & qtd_idosa >= 1 ~ 2,
+      qtd_adulta == 1 & qtd_crianca >= 1 & qtd_idosa == 0 ~ 3,
+      qtd_adulta == 1 & qtd_crianca >= 1 & qtd_idosa >= 1 ~ 4,
+      casal == FALSE & qtd_adulta > 1 & qtd_crianca == 0 & qtd_idosa == 0 ~ 5,
+      casal == FALSE & qtd_adulta > 1 & qtd_crianca == 0 & qtd_idosa >= 1 ~ 6,
+      casal == FALSE & qtd_adulta > 1 & qtd_crianca >= 1 & qtd_idosa == 0 ~ 7,
+      casal == FALSE & qtd_adulta > 1 & qtd_crianca >= 1 & qtd_idosa >= 1 ~ 8,
+      casal == TRUE & qtd_adulta > 1 & qtd_crianca == 0 & qtd_idosa == 0 ~ 9,
+      casal == TRUE & qtd_adulta > 1 & qtd_crianca == 0 & qtd_idosa >= 1 ~ 10,
+      casal == TRUE & qtd_adulta > 1 & qtd_crianca >= 1 & qtd_idosa == 0 ~ 11,
+      casal == TRUE & qtd_adulta > 1 & qtd_crianca >= 1 & qtd_idosa >= 1 ~ 12,
+      qtd_adulta == 0 & qtd_crianca == 0 & qtd_idosa == 1 ~ 13,
+      qtd_adulta == 0 & qtd_crianca >= 1 & qtd_idosa == 1 ~ 14,
+      qtd_adulta == 0 & qtd_crianca == 0 & qtd_idosa > 1 ~ 15,
+      qtd_adulta == 0 & qtd_crianca >= 1 & qtd_idosa > 1 ~ 16
+    )
+  )
+
+# ARRANJO_AFP ----------------------------------------
+
+# criando variável que detecta a presença de pessoas no grupo "filhos" em uma familia
+
+base_morador <- base_morador %>% 
+  mutate(filhos = any(V0306 == 4 | V0306 == 5 | V0306 == 6 | V0306 == 7
+                     | V0306 == 10 | V0306 == 11))
+
+# criando variável que detecta a presença de pessoas no grupo "pais" em uma família
+
+base_morador <- base_morador %>% 
+  mutate(pais = any(V0306 == 8 | V0306 == 9 | V0306 == 13))
+
+# criando variável que conta a quantidade de filhos em uma família
+
+base_morador <- base_morador %>% 
+  mutate(qtd_filhos = sum(V0306 == 4 | V0306 == 5 | V0306 == 6 | V0306 == 7
+                          | V0306 == 10 | V0306 == 11))
+
+# criando variável arranjo_afp, que determina arranjos familiares baseado em relação parental
+
+base_morador <- base_morador %>% 
+  mutate(
+    arranjo_afp = case_when(
+      qtd_membros == 1 & geracao == 'Adulta' ~ 1,
+      qtd_membros == 1 & geracao == 'Idosa' ~ 2,
+      qtd_membros > 1 & casal == FALSE & filhos == FALSE & pais == FALSE ~ 3,
+      qtd_membros > 1 & casal == FALSE & filhos == FALSE & pais == TRUE ~ 4,
+      qtd_membros > 1 & casal == FALSE & filhos == TRUE & pais == FALSE ~ 5,
+      qtd_membros > 1 & casal == FALSE & filhos == TRUE & pais == TRUE ~ 6,
+      casal == TRUE & filhos == FALSE & pais == FALSE ~ 7,
+      casal == TRUE & filhos == FALSE & pais == TRUE ~ 8,
+      casal == TRUE & filhos == TRUE & pais == FALSE ~ 9,
+      casal == TRUE & filhos == TRUE & pais == TRUE ~ 10
+    )
+  )
+
+# FREQUENCIAS ----------------------------------------
+
+# tabela de frequencia dos arranjos
+
+tabela_frequencia_arranjo_afp <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp) %>% 
+  mutate(arranjo_afp = factor(arranjo_afp, labels = c('Unipessoal (adulto)','Unipessoal (idoso)','Não casal, sem filhos, sem pais','Não casal, sem filhos, com pais','Não casal, com filhos, sem pais','Não casal, com filhos, com pais','Casal, sem filhos, sem pais','Casal, sem filhos, com pais','Casal, com filhos, sem pais','Casal, com filhos, com pais'),
+                              levels = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'))) %>% 
+  tally(wt= PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100)
+
+# tabela cruzada de frequencia dos arranjos e sexo da pessoa de referencia
+
+tabela_frequencia_arranjo_afp_C3 <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp, C3) %>% 
+  mutate(arranjo_afp = factor(arranjo_afp, labels = c('Unipessoal (adulto)','Unipessoal (idoso)','Não casal, sem filhos, sem pais','Não casal, sem filhos, com pais','Não casal, com filhos, sem pais','Não casal, com filhos, com pais','Casal, sem filhos, sem pais','Casal, sem filhos, com pais','Casal, com filhos, sem pais','Casal, com filhos, com pais'),
+                              levels = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'))) %>% 
+  mutate(C3 = factor(C3, labels = c('Homem', 'Mulher'),
+                     levels = c('1', '2'))) %>% 
+  tally(wt= PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100,
+         prop_total = (n/69017704)*100)
+
+# tabela cruzada de frequencia dos arranjos e faixa etaria da pessoa de referencia
+
+tabela_frequencia_arranjo_afp_C1 <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp, C1) %>% 
+  mutate(arranjo_afp = factor(arranjo_afp, labels = c('Unipessoal (adulto)','Unipessoal (idoso)','Não casal, sem filhos, sem pais','Não casal, sem filhos, com pais','Não casal, com filhos, sem pais','Não casal, com filhos, com pais','Casal, sem filhos, sem pais','Casal, sem filhos, com pais','Casal, com filhos, sem pais','Casal, com filhos, com pais'),
+                              levels = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10'))) %>% 
+  mutate(C1 = factor(C1, labels = c('Até 24 anos', '25 a 49 anos', '50 a 64 anos', '65 anos ou mais'),
+                     levels = c('1', '2', '3', '4'))) %>% 
+  tally(wt= PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100,
+         prop_total = (n/69017704)*100)
+
+# tabela cruzada de frequencia dos arranjos e quantidade de filhos
+
+tabela_frequencia_arranjo_afp_qtd_filhos <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp, qtd_filhos) %>% 
+  filter(arranjo_afp == 5 | arranjo_afp == 6 | arranjo_afp == 9 | arranjo_afp == 10) %>% 
+  mutate(arranjo_afp = factor(arranjo_afp, labels = c('Não casal, com filhos, sem pais','Não casal, com filhos, com pais','Casal, com filhos, sem pais','Casal, com filhos, com pais'),
+                              levels = c('5', '6', '9', '10'))) %>% 
+  tally(wt= PESO_FINAL) %>% 
+  mutate(prop = n/sum(n)*100) %>% 
+  mutate(qtdff = factor(case_when(qtd_filhos == 1 ~ "1 filho",
+                                 qtd_filhos == 2 ~ "2 filhos",
+                                 qtd_filhos == 3 ~ "3 filhos",
+                                 qtd_filhos == 4 ~ "4 filhos",
+                                 qtd_filhos > 4 ~ "5 filhos ou mais")))
+
+# criação de tabela base_morador_responsaveis apenas com as pessoas de referencia
+
+base_morador_familias <- base_morador %>% 
+  filter(V0306 == 1)
+
+# tabela cruzada excel de frequencia dos arranjos e sexo da pessoa de referencia 
+
+weighted.table(base_morador_responsaveis$arranjo_afp, y = base_morador_responsaveis$C3, weights = base_morador_responsaveis$PESO_FINAL, stat = "freq",
+               mar = FALSE, na.rm = FALSE, na.value = "NA", digits = 1)
+
+# tabela cruzada excel de frequencia dos arranjos e faixa etaria da pessoa de referencia
+
+weighted.table(base_morador_responsaveis$arranjo_afp, y = base_morador_responsaveis$C1, weights = base_morador_responsaveis$PESO_FINAL, stat = "freq",
+               mar = FALSE, na.rm = FALSE, na.value = "NA", digits = 1)
+
+# tabela cruzada excel de frequencia dos arranjos e quantidade de filhos
+
+# tabela preliminar
+
+tab_p <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  filter(arranjo_afp == 5 | arranjo_afp == 6 | arranjo_afp == 9 | arranjo_afp == 10) %>%
+  mutate(qtdff = factor(case_when(qtd_filhos == 1 ~ "1 filho",
+                                  qtd_filhos == 2 ~ "2 filhos",
+                                  qtd_filhos == 3 ~ "3 filhos",
+                                  qtd_filhos == 4 ~ "4 filhos",
+                                  qtd_filhos > 4 ~ "5 filhos ou mais")))
+
+
+# tabela cruzada
+
+weighted.table(tab_p$arranjo_afp, y = tab_p$qtdff, weights = tab_p$PESO_FINAL, stat = "freq",
+               mar = FALSE, na.rm = FALSE, na.value = "NA", digits = 1)
+
+# GRAFICOS ----------------------------------------
+
+teste1 <- base_morador %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp) %>% 
+  tally(wt= PESO_FINAL)
+
+teste2 <- morador_arranjo_projeto1 %>% 
+  filter(V0306 == 1) %>% 
+  group_by(arranjo_afp) %>% 
+  tally(wt= PESO_FINAL)
+
+
+
+
+
+
+
