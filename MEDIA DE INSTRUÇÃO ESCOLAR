@@ -1,5 +1,3 @@
-##CLIMA ESCOLAR
-
 
 install.packages("writexl")
 library(writexl)
@@ -113,13 +111,13 @@ MEDIA_FAMILIA <- MORADOR_25_ANOS %>%
 
 
 #ADEQUANDO OS VALORES AS CATEGORIAS DE MUITO BAIXO A MUITO ALTO -----
-CLIMA_ESC_FAMILIA <- MEDIA_FAMILIA %>% 
-  mutate(CLIMA_ESCOLAR = if_else(ANOS_ESTUDO  < 5, "MUITO BAIXO", 
+INSTRUCAO_FAMILIAR <- MEDIA_FAMILIA %>% 
+  mutate(NIVEL_INSTRUCAO = if_else(ANOS_ESTUDO  < 5, "MUITO BAIXO", 
                                  if_else(ANOS_ESTUDO >= 5 & ANOS_ESTUDO < 9, "BAIXO", 
                                          if_else(ANOS_ESTUDO >= 9 & ANOS_ESTUDO < 12, "MEDIO",
                                                  if_else(ANOS_ESTUDO >= 12 & ANOS_ESTUDO < 15, "ALTO","MUITO ALTO")))))           
 
 #A TABELA FINAL APLICANDO O PESO PARA TIRAR OS VALORES DE ACORDO COM A POPULACAO ----
-CLIMA_FREQ <- CLIMA_ESC_FAMILIA %>% 
-  group_by(CLIMA_ESCOLAR) %>% 
+FREQ <- INSTRUCAO_FAMILIAR %>% 
+  group_by(NIVEL_INSTRUCAO) %>% 
   tally( wt=PESO_FINAL)
