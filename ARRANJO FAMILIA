@@ -263,8 +263,13 @@ teste2 <- morador_arranjo_projeto1 %>%
   filter(V0306 == 1) %>% 
   group_by(arranjo_afp) %>% 
   tally(wt= PESO_FINAL)
+#RENOMEANDO A VARIAVEL idfamilia PARA ID_FAMILIA
+base_morador_familias <- base_morador_familias %>%
+ rename(ID_FAMILIA = id_familia)
 
+#SELECIONANDO A VARIAVEL IMPORTANTE PARA REPRODUZIR NA TABELA MAE
 
+arranjo_familiar <- select(base_morador_familias, ID_FAMILIA, arranjo_afp)
 
 
 
